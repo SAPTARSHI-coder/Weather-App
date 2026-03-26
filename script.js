@@ -484,7 +484,8 @@ async function loadHistory(cityName) {
 
     try {
         const promises = dates.map(dt => fetchWithRetry(`/api/history?q=${encodeURIComponent(cityName)}&dt=${dt}`));
-        const results = await Promise.all(promises);
+        const settled = await Promise.allSettled(promises);
+        const results = settled.filter(res => res.status === 'fulfilled').map(res => res.value);
 
         listEl.innerHTML = ''; // Clear loading
 
@@ -707,7 +708,8 @@ async function loadPastDailyForecast(cityName) {
 
     try {
         const promises = dates.map(dt => fetchWithRetry(`/api/history?q=${encodeURIComponent(cityName)}&dt=${dt}`));
-        const results = await Promise.all(promises);
+        const settled = await Promise.allSettled(promises);
+        const results = settled.filter(res => res.status === 'fulfilled').map(res => res.value);
 
         listEl.innerHTML = ''; // Clear loading
         results.forEach(data => {

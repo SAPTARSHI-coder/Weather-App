@@ -338,7 +338,8 @@ app.get('/api/history', async (req, res) => {
         });
         res.json(response.data);
     } catch (error) {
-        console.error('Error fetching history data:', error.message);
+        const apiMsg = error.response?.data?.error?.message || error.message;
+        console.error(`[WeatherAPI] History fetch failed for ${dt}: ${apiMsg}`);
         if (error.response) res.status(error.response.status).json(error.response.data);
         else res.status(500).json({ error: 'Internal Server Error' });
     }

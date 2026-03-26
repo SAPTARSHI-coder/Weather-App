@@ -68,18 +68,18 @@ async function fetchOpenMeteo(lat, lon) {
         daily: 'weathercode,temperature_2m_max,temperature_2m_min,precipitation_sum,windspeed_10m_max',
         windspeed_unit: 'kmh',
         timezone: 'auto',
-        forecast_days: 14
+        forecast_days: 7
     };
     const res = await fetchWithRetry({ method: 'GET', url, params });
     return res.data;
 }
 
-// ─── HELPER: Build 14-day merged forecast ────────────────────────────────────
+// ─── HELPER: Build 7-day merged forecast ────────────────────────────────────
 function buildForecast(wapiForecast, omData) {
     const days = [];
     const omDaily = omData?.daily;
 
-    for (let i = 0; i < 14; i++) {
+    for (let i = 0; i < 7; i++) {
         if (i < 3 && wapiForecast[i]) {
             // Days 1-3: blend WeatherAPI + Open-Meteo
             const wd = wapiForecast[i].day;
@@ -104,7 +104,7 @@ function buildForecast(wapiForecast, omData) {
                 source: 'blended'
             });
         } else if (omDaily?.time?.[i]) {
-            // Days 4-14: Open-Meteo only
+            // Days 4-7: Open-Meteo only
             const code = omDaily.weathercode[i];
             let condition = 'Clear';
             if (code >= 1 && code <= 3) condition = 'Partly Cloudy';
@@ -197,8 +197,8 @@ app.get('/api/weather', async (req, res) => {
         // Step 7: Confidence (v2 - includes reason)
         const confidence = calculateConfidence(fused.temp_diff, fused.sources_used.length);
 
-        // Step 8: Build 14-day merged forecast
-        const forecast14 = buildForecast(wapiData.forecast.forecastday, omData);
+        // Step 8: Build 7-day merged forecast
+        const forecast7 = buildForecast(wapiData.forecast.forecastday, omData);
 
         // ── INTELLIGENCE LAYER ────────────────────────────────────────────────────
         // Step I1: Record snapshot into per-city ring buffer (reuses cityKey from step 5c)

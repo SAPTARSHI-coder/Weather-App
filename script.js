@@ -476,7 +476,7 @@ async function loadHistory(cityName) {
     loadingEl.style.display = 'block';
 
     const dates = [];
-    for (let i = 1; i <= 14; i++) {
+    for (let i = 1; i <= 7; i++) {
         const d = new Date();
         d.setDate(d.getDate() - i);
         dates.push(d.toISOString().split('T')[0]); // YYYY-MM-DD
@@ -507,8 +507,8 @@ async function loadHistory(cityName) {
         // ── Fetch Historical AQI from Open-Meteo (since WeatherAPI omits it) ──
         try {
             const { lat, lon } = currentCityData;
-            // Get past 14 days AQI in one call
-            const aqiRes = await fetch(`https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${lat}&longitude=${lon}&hourly=us_aqi,carbon_monoxide&past_days=14`);
+            // Get past 7 days AQI in one call
+            const aqiRes = await fetch(`https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${lat}&longitude=${lon}&hourly=us_aqi,carbon_monoxide&past_days=7`);
             if (aqiRes.ok) {
                 const aqiData = await aqiRes.json();
                 const times = aqiData.hourly.time;
@@ -700,7 +700,7 @@ async function loadPastDailyForecast(cityName) {
     listEl.innerHTML = '<div class="daily-item"><p>Loading historical data...</p></div>';
 
     const dates = [];
-    for (let i = 1; i <= 14; i++) {
+    for (let i = 1; i <= 7; i++) {
         const d = new Date();
         d.setDate(d.getDate() - i);
         dates.push(d.toISOString().split('T')[0]); // YYYY-MM-DD
@@ -950,10 +950,10 @@ async function updateUI(data, fused = null) {
         };
     });
     
-    // Fallback logic for full 14 day prediction via Open-Meteo since free Weather API limits forecast to 3 days
-    if (fullForecastData.length < 14 && currentCityData) {
+    // Fallback logic for full 7 day prediction via Open-Meteo since free Weather API limits forecast to 3 days
+    if (fullForecastData.length < 7 && currentCityData) {
         try {
-            const omRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${currentCityData.lat}&longitude=${currentCityData.lon}&daily=weathercode,temperature_2m_max,temperature_2m_min&timezone=auto&forecast_days=14`);
+            const omRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${currentCityData.lat}&longitude=${currentCityData.lon}&daily=weathercode,temperature_2m_max,temperature_2m_min&timezone=auto&forecast_days=7`);
             if (omRes.ok) {
                 const omData = await omRes.json();
                 if (omData && omData.daily && omData.daily.time) {

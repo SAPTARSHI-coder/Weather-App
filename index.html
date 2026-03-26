@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SkyGlass Weather</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+</head>
+<body class="theme-dark">
+    <!-- Top bar removed as requested -->
+
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="logo">
+                <i class="ri-cloud-windy-line"></i>
+                <span>SkyGlass</span>
+            </div>
+            <nav>
+                <a href="#" class="nav-btn active" data-target="dashboard"><i class="ri-dashboard-line"></i> Dashboard</a>
+                <a href="#" class="nav-btn" data-target="map-view"><i class="ri-map-2-line"></i> Map</a>
+                <a href="#" class="nav-btn" data-target="saved-view"><i class="ri-heart-line"></i> Saved</a>
+                <a href="#" class="nav-btn" data-target="history-view"><i class="ri-history-line"></i> History</a>
+            </nav>
+            <!-- User Profile moved out of here as requested -->
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Central Hero Header (Greeting & Welcome) -->
+            <section class="hero-header">
+                <div class="greeting-container">
+                    <h2 id="greeting">Good Morning</h2>
+                    <p class="welcome-text">Welcome back, here's your weather today.</p>
+                </div>
+            </section>
+
+            <!-- Search Area -->
+            <div class="search-section">
+                <button id="menu-toggle" class="menu-toggle"><i class="ri-menu-line"></i></button>
+                <header class="header">
+                    <i id="theme-icon" class="ri-moon-line theme-icon" title="Theme Indicator"></i>
+                    
+                    <!-- New Dual Clock Widget -->
+                    <div class="clock-widget">
+                        <div class="analog-clock">
+                            <div class="hand hour-hand" id="hour-hand"></div>
+                            <div class="hand min-hand" id="min-hand"></div>
+                            <div class="hand sec-hand" id="sec-hand"></div>
+                            <div class="clock-center"></div>
+                        </div>
+                        <div class="digital-times">
+                            <div class="local-time">
+                                <span id="current-time">--:--</span>
+                                <span id="current-date" class="date-text">...</span>
+                            </div>
+                            <div class="gmt-time" id="gmt-time">GMT --:--</div>
+                        </div>
+                    </div>
+
+                    <div class="search-bar">
+                        <i class="ri-search-line"></i>
+                        <input type="text" id="city-search" placeholder="Search for cities...">
+                        <button id="search-btn"><i class="ri-map-pin-line"></i></button>
+                        <ul id="search-suggestions" class="suggestions-dropdown hidden"></ul>
+                    </div>
+                </header>
+            </div>
+
+            <!-- VIEW: DASHBOARD -->
+            <div id="dashboard" class="view-section active">
+                <div class="dashboard-grid">
+                    <!-- Current Weather (Hero) — spans all 3 cols -->
+                    <div class="card current-weather">
+                        <div class="weather-info">
+                            <h1 id="city-name">...</h1>
+                            <h2 id="temperature">...</h2>
+                            <p id="condition">...</p>
+                            <p id="feels-like" class="sub-value" style="font-size:0.9rem; margin-top: 4px;">Feels like --</p>
+                            <div id="confidence-badge" class="confidence-badge" style="display:none;"></div>
+                        </div>
+                        <div class="weather-visual">
+                            <i class="ri-moon-cloudy-line huge-icon"></i>
+                        </div>
+                    </div>
+
+                    <!-- City Clock (replaces UV Index) -->
+                    <div class="card highlight-card city-clock-card">
+                        <h3 id="city-clock-label">City Time</h3>
+                        <div class="city-clock-inner">
+                            <div class="city-analog-clock" id="city-analog">
+                                <div class="hand hour-hand" id="city-hour-hand"></div>
+                                <div class="hand min-hand" id="city-min-hand"></div>
+                                <div class="hand sec-hand" id="city-sec-hand"></div>
+                                <div class="clock-center"></div>
+                            </div>
+                            <div class="city-digital">
+                                <span class="city-clock-time" id="city-clock-time">--:--</span>
+                                <span class="city-clock-ampm" id="city-clock-ampm">...</span>
+                                <span class="city-clock-tz" id="city-clock-tz">...</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Wind -->
+                    <div class="card highlight-card">
+                        <h3>Wind Status</h3>
+                        <div class="wind-rose" id="wind-rose" style="--rotation: 0deg;">
+                           <div class="needle"></div>
+                           <div class="direction N">N</div>
+                           <div class="direction E">E</div>
+                           <div class="direction S">S</div>
+                           <div class="direction W">W</div>
+                        </div>
+                        <div class="value" id="wind-status" style="margin-top: 10px;">-- <small>km/h</small></div>
+                        <div class="sub-value" id="wind-dir">Direction: --</div>
+                    </div>
+
+                    <!-- Air Quality -->
+                    <div class="card highlight-card aqi-card">
+                        <h3>Air Quality</h3>
+                        <div class="aqi-content">
+                            <div class="aqi-value-box">
+                                <span class="value" id="aqi-value">...</span>
+                                <span class="sub-value" id="aqi-status">...</span>
+                            </div>
+                            <div class="aqi-bar-container">
+                                <div class="aqi-bar-fill" id="aqi-progress"></div>
+                            </div>
+                            <div class="sub-value" id="co-level" style="margin-top: 5px;">CO: --</div>
+                            <div id="aqi-tip" class="health-tip"></div>
+                        </div>
+                    </div>
+
+                    <!-- Humidity -->
+                    <div class="card highlight-card">
+                        <h3>Humidity</h3>
+                        <div class="humidity-wrapper">
+                            <div class="value" id="humidity">--%</div>
+                            <div class="water-drop-wrapper">
+                                <div class="water-drop" id="humidity-drop"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Visibility -->
+                    <div class="card highlight-card">
+                        <h3>Visibility</h3>
+                        <div class="value" id="visibility">-- <small>km</small></div>
+                    </div>                    <!-- Unified Pressure & UV Index -->
+                    <div class="card highlight-card" style="padding: 15px;">
+                        <div style="display: flex; width: 100%; height: 100%;">
+                            <!-- Pressure Side -->
+                            <div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; border-right: 1px solid rgba(255,255,255,0.1); padding-right: 10px;">
+                                <h3 style="margin-bottom: 5px;">Pressure</h3>
+                                <div class="value" id="pressure" style="font-size: 1.5rem; text-align: center;">...</div>
+                                <div class="sub-value" id="pressure-trend" style="margin-top: 5px; text-align: center; font-size: 0.8rem;">...</div>
+                            </div>
+                            <!-- UV Side -->
+                            <div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding-left: 10px;">
+                                <h3 style="margin-bottom: 5px;">UV Index</h3>
+                                <div class="value" id="uv-index" style="font-size: 1.5rem; text-align: center;">...</div>
+                                <div class="sub-value" id="uv-label" style="margin-top: 5px; text-align: center; font-size: 0.8rem;">...</div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Sun Times -->
+                    <div class="card highlight-card">
+                        <h3>Sunrise &amp; Sunset</h3>
+                        <div class="sun-times-container">
+                            <div class="sun-item">
+                                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#FFD700" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v6"/><path d="m4.93 10.93 1.41 1.42"/><path d="M2 18h2"/><path d="M20 18h2"/><path d="m19.07 10.93-1.41 1.42"/><path d="M22 22H2"/><path d="m8 6 4-4 4 4"/><path d="M16 18a4 4 0 0 0-8 0"/></svg>
+                                <div class="value sub-value" id="sunrise-time">--:--</div>
+                            </div>
+                            <div class="sun-item">
+                                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#FF6B6B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 10V2"/><path d="m4.93 10.93 1.41 1.42"/><path d="M2 18h2"/><path d="M20 18h2"/><path d="m19.07 10.93-1.41 1.42"/><path d="M22 22H2"/><path d="m16 5-4 4-4-4"/><path d="M16 18a4 4 0 0 0-8 0"/></svg>
+                                <div class="value sub-value" id="sunset-time">--:--</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Rainfall -->
+                    <div class="card highlight-card">
+                        <h3>Rainfall</h3>
+                        <div class="value" id="rainfall">-- <small>mm</small></div>
+                        <div class="sub-value">Last 24h</div>
+                    </div>
+
+                </div>
+
+                <!-- ═══════════════════════════════════════════════════════════ -->
+                <!-- INTELLIGENCE PANEL                                          -->
+                <!-- ═══════════════════════════════════════════════════════════ -->
+                <div class="card intelligence-card" id="intelligence-panel">
+                    <!-- Anomaly Banner (hidden by default) -->
+                    <div class="anomaly-banner" id="anomaly-banner" style="display:none;">
+                        <i class="ri-alarm-warning-fill"></i>
+                        <span id="anomaly-banner-text">Anomaly Detected</span>
+                    </div>
+
+                    <div class="intel-grid">
+                        <!-- 🔮 Next Hour Prediction -->
+                        <div class="intel-section" id="intel-prediction">
+                            <div class="intel-label">
+                                <i class="ri-magic-line"></i> Next Hour
+                            </div>
+                            <div class="intel-main-value" id="intel-pred-temp">...</div>
+                            <div class="intel-condition" id="intel-pred-condition">...</div>
+                            <div class="intel-trend-arrow" id="intel-temp-direction">...</div>
+                            <div class="intel-confidence-badge" id="intel-confidence">Estimating…</div>
+                        </div>
+
+                        <!-- 🌧️ Rain Probability -->
+                        <div class="intel-section" id="intel-rain">
+                            <div class="intel-label">
+                                <i class="ri-rainy-line"></i> Rain Chance
+                            </div>
+                            <div class="intel-rain-badge" id="intel-rain-badge">...</div>
+                            <div class="rain-factor-list" id="intel-rain-factors"></div>
+                        </div>
+
+                        <!-- 📊 Stability -->
+                        <div class="intel-section" id="intel-stability">
+                            <div class="intel-label">
+                                <i class="ri-pulse-line"></i> Stability
+                            </div>
+                            <div class="intel-stability-badge" id="intel-stability-badge">...</div>
+                            <div class="intel-sub" id="intel-stability-detail">Monitoring…</div>
+                        </div>
+
+                        <!-- 💡 Smart Insights -->
+                        <div class="intel-section intel-section--wide" id="intel-insights">
+                            <div class="intel-label">
+                                <i class="ri-lightbulb-flash-line"></i> Smart Insights
+                            </div>
+                            <ul class="insight-list" id="intel-insight-list">
+                                <li class="insight-item insight-loading">
+                                    <i class="ri-loader-4-line ri-spin"></i> Analysing conditions…
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Forecasts Section (Below Intelligence Panel) -->
+                <div class="forecasts-grid">
+                    <section class="card hourly-forecast-card">
+                        <div class="hourly-header">
+                            <h3>Hourly Forecast</h3>
+                            <div class="forecast-controls">
+                                <div class="toggle-group" id="metric-toggles">
+                                    <button class="toggle-btn active" data-metric="temperature">Temp</button>
+                                    <button class="toggle-btn" data-metric="precipitation">Precip</button>
+                                    <button class="toggle-btn" data-metric="wind">Wind</button>
+                                </div>
+                                <div class="toggle-group" id="duration-toggles">
+                                    <button class="toggle-btn active" data-duration="6">6 hr</button>
+                                    <button class="toggle-btn" data-duration="12">12 hr</button>
+                                    <button class="toggle-btn" data-duration="24">24 hr</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="hourlyChart"></canvas>
+                        </div>
+                    </section>
+
+                    <section class="card daily-forecast-card">
+                        <div class="hourly-header">
+                            <h3>Daily Forecast</h3>
+                            <div class="forecast-controls">
+                                <div class="toggle-group" id="daily-toggles">
+                                    <button class="toggle-btn" data-type="past">Past 14</button>
+                                    <button class="toggle-btn active" data-type="future">Future 14</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="daily-list" id="daily-list">
+                            <!-- Dynamic Content Here -->
+                        </div>
+                    </section>
+                </div>
+            </div>
+
+            <!-- VIEW: MAP -->
+            <div id="map-view" class="view-section" style="display: none;">
+                <div class="map-wrapper card">
+                    <div id="map-container" style="flex: 1; width: 100%; height: 100%;">
+                        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: var(--text-secondary);">
+                            <i class="ri-map-2-line" style="font-size: 4rem; opacity: 0.5;"></i>
+                            <h2>Loading Map...</h2>
+                        </div>
+                    </div>
+                    <!-- Map Controls overlay -->
+                    <div class="map-controls">
+                        <button id="map-play-btn" class="play-btn"><i class="ri-pause-fill"></i></button>
+                        <span id="map-time" style="min-width: 60px;">--:--</span>
+                        <input type="range" id="map-slider" min="0" max="0" value="0">
+                        <div class="radar-legend">
+                            <span>Rain <i class="color-dot rain"></i></span>
+                            <span>Snow <i class="color-dot snow"></i></span>
+                            <span>Ice <i class="color-dot ice"></i></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VIEW: SAVED (Placeholder) -->
+            <div id="saved-view" class="view-section" style="display: none;">
+                <div class="card placeholder-card">
+                    <i class="ri-heart-line"></i>
+                    <h2>Saved Locations</h2>
+                    <p>No locations saved yet.</p>
+                </div>
+            </div>
+
+
+            <!-- VIEW: HISTORY -->
+            <div id="history-view" class="view-section" style="display: none;">
+                <!-- Horizontal Day Picker -->
+                <div class="history-picker-container" style="margin-bottom: 20px;">
+                    <h3>Historical Weather</h3>
+                    <div class="history-scroll-track" id="history-picker">
+                        <!-- JS injected past 14 days -->
+                    </div>
+                </div>
+
+                <!-- Replicated History Dashboard Grid (hidden until a day is selected) -->
+                <div id="hist-grid-container" style="display: none;">
+                    <div class="dashboard-grid">
+                    <!-- Hero -->
+                    <div class="card current-weather">
+                        <div class="weather-info">
+                            <h1 id="hist-city-name">...</h1>
+                            <h2 id="hist-temperature">...</h2>
+                            <p id="hist-condition">...</p>
+                            <p id="hist-feels-like" class="sub-value" style="font-size:0.9rem; margin-top: 4px;">...</p>
+                        </div>
+                        <div class="weather-visual">
+                            <i class="ri-moon-cloudy-line huge-icon" id="hist-weather-icon"></i>
+                        </div>
+                    </div>
+
+                    <!-- Wind -->
+                    <div class="card highlight-card">
+                        <h3>Wind Status</h3>
+                        <div class="wind-rose" id="hist-wind-rose" style="--rotation: 0deg;">
+                           <div class="needle"></div>
+                           <div class="direction N">N</div>
+                           <div class="direction E">E</div>
+                           <div class="direction S">S</div>
+                           <div class="direction W">W</div>
+                        </div>
+                        <div class="value" id="hist-wind-status" style="margin-top: 10px;">-- <small>km/h</small></div>
+                        <div class="sub-value" id="hist-wind-dir">Direction: --</div>
+                    </div>
+
+                    <!-- Air Quality -->
+                    <div class="card highlight-card aqi-card">
+                        <h3>Air Quality</h3>
+                        <div class="aqi-content">
+                            <div class="aqi-value-box">
+                                <span class="value" id="hist-aqi-value">...</span>
+                                <span class="sub-value" id="hist-aqi-status">...</span>
+                            </div>
+                            <div class="aqi-bar-container">
+                                <div class="aqi-bar-fill" id="hist-aqi-progress"></div>
+                            </div>
+                            <div class="sub-value" id="hist-co-level" style="margin-top: 5px;">CO: --</div>
+                            <div id="hist-aqi-tip" class="health-tip"></div>
+                        </div>
+                    </div>
+
+                    <!-- Humidity -->
+                    <div class="card highlight-card">
+                        <h3>Humidity</h3>
+                        <div class="humidity-wrapper">
+                            <div class="value" id="hist-humidity">--%</div>
+                            <div class="water-drop-wrapper">
+                                <div class="water-drop" id="hist-humidity-drop"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Visibility -->
+                    <div class="card highlight-card">
+                        <h3>Visibility</h3>
+                        <div class="value" id="hist-visibility">-- <small>km</small></div>
+                    </div>
+                    <!-- Unified Pressure & UV Index -->
+                    <div class="card highlight-card" style="padding: 15px;">
+                        <div style="display: flex; width: 100%; height: 100%;">
+                            <!-- Pressure Side -->
+                            <div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; border-right: 1px solid rgba(255,255,255,0.1); padding-right: 10px;">
+                                <h3 style="margin-bottom: 5px;">Pressure</h3>
+                                <div class="value" id="hist-pressure" style="font-size: 1.5rem; text-align: center;">...</div>
+                                <div class="sub-value" id="hist-pressure-trend" style="margin-top: 5px; text-align: center; font-size: 0.8rem;">...</div>
+                            </div>
+                            <!-- UV Side -->
+                            <div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding-left: 10px;">
+                                <h3 style="margin-bottom: 5px;">UV Index</h3>
+                                <div class="value" id="hist-uv-index" style="font-size: 1.5rem; text-align: center;">...</div>
+                                <div class="sub-value" id="hist-uv-label" style="margin-top: 5px; text-align: center; font-size: 0.8rem;">...</div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Sun Times -->
+                    <div class="card highlight-card">
+                        <h3>Sunrise &amp; Sunset</h3>
+                        <div class="sun-times-container">
+                            <div class="sun-item">
+                                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#FFD700" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v6"/><path d="m4.93 10.93 1.41 1.42"/><path d="M2 18h2"/><path d="M20 18h2"/><path d="m19.07 10.93-1.41 1.42"/><path d="M22 22H2"/><path d="m8 6 4-4 4 4"/><path d="M16 18a4 4 0 0 0-8 0"/></svg>
+                                <div class="value sub-value" id="hist-sunrise-time">--:--</div>
+                            </div>
+                            <div class="sun-item">
+                                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#FF6B6B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 10V2"/><path d="m4.93 10.93 1.41 1.42"/><path d="M2 18h2"/><path d="M20 18h2"/><path d="m19.07 10.93-1.41 1.42"/><path d="M22 22H2"/><path d="m16 5-4 4-4-4"/><path d="M16 18a4 4 0 0 0-8 0"/></svg>
+                                <div class="value sub-value" id="hist-sunset-time">--:--</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Rainfall -->
+                    <div class="card highlight-card">
+                        <h3>Rainfall</h3>
+                        <div class="value" id="hist-rainfall">-- <small>mm</small></div>
+                        <div class="sub-value">Total for day</div>
+                    </div>
+
+                </div>
+                </div>
+                
+
+                <div id="hist-loading" style="text-align: center; color: var(--text-secondary); padding: 40px;">
+                    <i class="ri-loader-4-line ri-spin" style="font-size: 2rem;"></i>
+                    <p style="margin-top: 10px;">Select a day to view its detailed weather dashboard...</p>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- Chart.js -->
+    <script type="module" src="script.js"></script>
+</body>
+</html>

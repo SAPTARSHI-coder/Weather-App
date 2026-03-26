@@ -24,7 +24,7 @@ const PORT = process.env.PORT || 3001;
 app.use(cors());
 app.use(express.json());
 
-const WEATHER_API_KEY = process.env.VITE_WEATHER_API_KEY;
+const WEATHER_API_KEY = process.env.WEATHER_API_KEY || process.env.VITE_WEATHER_API_KEY;
 const WEATHER_BASE = 'http://api.weatherapi.com/v1';
 const OM_BASE = 'https://api.open-meteo.com/v1';
 
@@ -45,6 +45,18 @@ function setCached(key, data) {
     cache.set(key, { data, ts: Date.now() });
 }
 
+// ─── HELPER: Fetch with Retry and Timeout ──────────────────────────────────────
+async function fetchWithRetry(config, retries = 1, timeout = 5000) {
+    for (let i = 0; i <= retries; i++) {
+        try {
+            return await axios({ ...config, timeout });
+        } catch (error) {
+            if (i === retries) throw error;
+            console.warn(`[Backend] Retry ${i+1}/${retries} for ${config.url}`);
+        }
+    }
+}
+
 // ─── HELPER: Fetch Open-Meteo by coordinates ─────────────────────────────────
 async function fetchOpenMeteo(lat, lon) {
     const url = `${OM_BASE}/forecast`;
@@ -58,7 +70,7 @@ async function fetchOpenMeteo(lat, lon) {
         timezone: 'auto',
         forecast_days: 14
     };
-    const res = await axios.get(url, { params });
+    const res = await fetchWithRetry({ method: 'GET', url, params });
     return res.data;
 }
 
@@ -118,26 +130,35 @@ function buildForecast(wapiForecast, omData) {
     return days;
 }
 
-// ─── ENDPOINT: /api/fused ────────────────────────────────────────────────────
-app.get('/api/fused', async (req, res) => {
-    const { q } = req.query;
-    if (!q) return res.status(400).json({ error: 'City query parameter "q" is required.' });
+// ─── ENDPOINT: /api/weather ────────────────────────────────────────────────────
+app.get('/api/weather', async (req, res) => {
+    let { lat, lon, q } = req.query;
+    
+    if (lat && lon) {
+        q = `${lat},${lon}`;
+    }
+
+    if (!q) {
+         return res.status(400).json({ success: false, message: 'Latitude "lat" and Longitude "lon" are required.' });
+    }
 
     // Check cache
     const cacheKey = `fused:${q.toLowerCase().trim()}`;
     const cached = getCached(cacheKey);
     if (cached) {
-        return res.json({ ...cached, _cached: true });
+        return res.json({ success: true, data: { ...cached, _cached: true } });
     }
 
     try {
         // Step 1: Fetch WeatherAPI (primary)
-        const wapiRes = await axios.get(`${WEATHER_BASE}/forecast.json`, {
+        const wapiRes = await fetchWithRetry({
+            method: 'GET',
+            url: `${WEATHER_BASE}/forecast.json`,
             params: { key: WEATHER_API_KEY, q, days: 3, aqi: 'yes', alerts: 'no' }
         });
         const wapiData = wapiRes.data;
-        const lat = wapiData.location.lat;
-        const lon = wapiData.location.lon;
+        const resolvedLat = wapiData.location.lat;
+        const resolvedLon = wapiData.location.lon;
 
         // Step 2: Fetch Open-Meteo in parallel using the resolved coordinates
         let omData = null;
@@ -296,34 +317,17 @@ app.get('/api/fused', async (req, res) => {
         };
 
         setCached(cacheKey, response);
-        res.json(response);
+        res.json({ success: true, data: response });
 
     } catch (error) {
         console.error('Fusion engine error:', error.message);
-        if (error.response) {
-            res.status(error.response.status).json(error.response.data);
-        } else {
-            res.status(500).json({ error: 'Internal Server Error in fusion engine.' });
-        }
+        res.status(500).json({ success: false, message: 'Failed to fetch weather data' });
     }
 });
 
 // ─── EXISTING ENDPOINTS (preserved for backward compatibility) ────────────────
 
-app.get('/api/weather', async (req, res) => {
-    const { q, days } = req.query;
-    if (!q) return res.status(400).json({ error: 'City query parameter "q" is required' });
-    try {
-        const response = await axios.get(`${WEATHER_BASE}/forecast.json`, {
-            params: { key: WEATHER_API_KEY, q, days: days || 14, aqi: 'yes', alerts: 'no' }
-        });
-        res.json(response.data);
-    } catch (error) {
-        console.error('Error fetching weather data:', error.message);
-        if (error.response) res.status(error.response.status).json(error.response.data);
-        else res.status(500).json({ error: 'Internal Server Error' });
-    }
-});
+
 
 app.get('/api/history', async (req, res) => {
     const { q, dt } = req.query;

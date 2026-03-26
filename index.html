@@ -75,7 +75,15 @@
 
             <!-- VIEW: DASHBOARD -->
             <div id="dashboard" class="view-section active">
-                <div class="dashboard-grid">
+                <!-- Overlay for Loading/Error -->
+                <div id="dashboard-state-overlay" style="display: none; justify-content: center; align-items: center; min-height: 400px; text-align: center; color: var(--text-secondary);">
+                    <div>
+                        <i id="dashboard-state-icon" class="ri-loader-4-line ri-spin" style="font-size: 3rem; margin-bottom: 15px; display: block;"></i>
+                        <h2 id="dashboard-state-text">Loading weather data...</h2>
+                    </div>
+                </div>
+
+                <div class="dashboard-grid" id="main-dashboard-grid">
                     <!-- Current Weather (Hero) — spans all 3 cols -->
                     <div class="card current-weather">
                         <div class="weather-info">
@@ -249,7 +257,7 @@
                 </div>
 
                 <!-- Forecasts Section (Below Intelligence Panel) -->
-                <div class="forecasts-grid">
+                <div class="forecasts-grid" id="main-forecasts-grid">
                     <section class="card hourly-forecast-card">
                         <div class="hourly-header">
                             <h3>Hourly Forecast</h3>

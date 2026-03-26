@@ -17,7 +17,66 @@ const menuToggle = document.getElementById('menu-toggle');
 const sidebar = document.querySelector('.sidebar');
 const historyListEl = document.getElementById('history-list');
 
-const API_KEY = import.meta.env.VITE_WEATHER_API_KEY;
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
+
+async function fetchWithRetry(url, options = {}, retries = 2, timeoutMs = 5000) {
+    for (let i = 0; i <= retries; i++) {
+        const controller = new AbortController();
+        const id = setTimeout(() => controller.abort(), timeoutMs);
+        try {
+            const res = await fetch(`${API_BASE_URL}${url}`, { ...options, signal: controller.signal });
+            clearTimeout(id);
+            if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+            return await res.json();
+        } catch (error) {
+            clearTimeout(id);
+            if (i === retries) throw error;
+            console.warn(`[Frontend] Fetch retry ${i+1}/${retries} for ${url}`);
+        }
+    }
+}
+
+function showDashboardState(state, message = "") {
+    const overlay = document.getElementById('dashboard-state-overlay');
+    const grid = document.getElementById('main-dashboard-grid');
+    const panel = document.getElementById('intelligence-panel');
+    const forecasts = document.getElementById('main-forecasts-grid');
+    
+    if (!overlay) return;
+    
+    const icon = document.getElementById('dashboard-state-icon');
+    const text = document.getElementById('dashboard-state-text');
+    
+    if (state === 'loading') {
+        overlay.style.display = 'flex';
+        icon.className = 'ri-loader-4-line ri-spin';
+        icon.style.color = 'var(--text-secondary)';
+        text.textContent = message || 'Loading weather data...';
+        text.style.color = 'var(--text-secondary)';
+        if (grid) grid.style.display = 'none';
+        if (panel) panel.style.display = 'none';
+        if (forecasts) forecasts.style.display = 'none';
+    } else if (state === 'error') {
+        overlay.style.display = 'flex';
+        icon.className = 'ri-error-warning-line';
+        icon.style.color = '#ff6b6b';
+        text.textContent = message || 'Unable to fetch data. Please try again.';
+        text.style.color = '#ff6b6b';
+        if (grid) grid.style.display = 'none';
+        if (panel) panel.style.display = 'none';
+        if (forecasts) forecasts.style.display = 'none';
+    } else {
+        // Success
+        overlay.style.display = 'none';
+        if (grid) grid.style.display = '';
+        if (panel) panel.style.display = '';
+        if (forecasts) forecasts.style.display = '';
+    }
+}
+
+function safeVal(val) {
+    return (val === null || val === undefined) ? "Data unavailable" : val;
+}
 
 let weatherChart;
 let fullForecastData = []; 
@@ -96,8 +155,8 @@ function init() {
             (err) => {
                 if (hasUserSearched) return; // Prevent shifting
                 console.warn("Location access denied or error:", err.message);
-                loadCity('London'); // Default fallback
-                alert("Could not access your location. Defaulting to London.");
+                loadCity('Kolkata'); // Default fallback
+                alert("Could not access your location. Defaulting to Kolkata.");
             },
             {
                 timeout: 10000,
@@ -106,7 +165,7 @@ function init() {
         );
     } else {
         console.warn("Geolocation not supported");
-        loadCity('London');
+        loadCity('Kolkata');
     }
     
 // Global flag to prevent late geolocation callbacks from overriding user searches
@@ -151,8 +210,7 @@ searchInput.addEventListener('keypress', (e) => {
         
         searchTimeout = setTimeout(async () => {
             try {
-                const res = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
-                const data = await res.json();
+                const data = await fetchWithRetry(`/api/search?q=${encodeURIComponent(query)}`);
                 
                 if (data && data.length > 0) {
                     suggestionsBox.innerHTML = '';
@@ -377,21 +435,30 @@ if (hrs >= 5 && hrs < 12) {
 // -- API Integration --
 
 async function loadCity(query) {
+    showDashboardState('loading');
     document.body.style.cursor = 'wait';
     try {
-        // Hit the new Multi-Source Fusion Engine endpoint
-        const response = await fetch(`/api/fused?q=${encodeURIComponent(query)}`);
-        if (!response.ok) throw new Error('City not found');
+        let fetchUrl;
+        if (query.includes(',')) {
+            const [lat, lon] = query.split(',');
+            fetchUrl = `/api/weather?lat=${lat.trim()}&lon=${lon.trim()}`;
+        } else {
+            fetchUrl = `/api/weather?q=${encodeURIComponent(query)}`;
+        }
+
+        const data = await fetchWithRetry(fetchUrl);
+        if (!data || !data.success) throw new Error(data?.message || 'City not found');
         
-        const data = await response.json();
-        
-        // data.raw contains the original WeatherAPI response for the existing UI
-        // data itself contains the fused / enriched fields
-        updateUI(data.raw, data);
+        updateUI(data.data.raw, data.data);
+        showDashboardState('success');
         
     } catch (error) {
         console.error(error);
-        alert("Error loading city data. Please try again.");
+        if (error.message.includes("City not found")) {
+            showDashboardState('error', "Location data unavailable");
+        } else {
+            showDashboardState('error');
+        }
     } finally {
         document.body.style.cursor = 'default';
         citySearch.value = '';
@@ -416,7 +483,7 @@ async function loadHistory(cityName) {
     }
 
     try {
-        const promises = dates.map(dt => fetch(`/api/history?q=${cityName}&dt=${dt}`).then(res => res.json()));
+        const promises = dates.map(dt => fetchWithRetry(`/api/history?q=${cityName}&dt=${dt}`));
         const results = await Promise.all(promises);
 
         listEl.innerHTML = ''; // Clear loading
@@ -639,7 +706,7 @@ async function loadPastDailyForecast(cityName) {
     }
 
     try {
-        const promises = dates.map(dt => fetch(`/api/history?q=${cityName}&dt=${dt}`).then(res => res.json()));
+        const promises = dates.map(dt => fetchWithRetry(`/api/history?q=${cityName}&dt=${dt}`));
         const results = await Promise.all(promises);
 
         listEl.innerHTML = ''; // Clear loading

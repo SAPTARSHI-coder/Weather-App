@@ -483,7 +483,7 @@ async function loadHistory(cityName) {
     }
 
     try {
-        const promises = dates.map(dt => fetchWithRetry(`/api/history?q=${cityName}&dt=${dt}`));
+        const promises = dates.map(dt => fetchWithRetry(`/api/history?q=${encodeURIComponent(cityName)}&dt=${dt}`));
         const results = await Promise.all(promises);
 
         listEl.innerHTML = ''; // Clear loading
@@ -706,7 +706,7 @@ async function loadPastDailyForecast(cityName) {
     }
 
     try {
-        const promises = dates.map(dt => fetchWithRetry(`/api/history?q=${cityName}&dt=${dt}`));
+        const promises = dates.map(dt => fetchWithRetry(`/api/history?q=${encodeURIComponent(cityName)}&dt=${dt}`));
         const results = await Promise.all(promises);
 
         listEl.innerHTML = ''; // Clear loading

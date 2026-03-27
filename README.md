@@ -54,7 +54,7 @@ The result is a dashboard that provides not only current conditions but also:
 | ⚫ **Vercel** | [weather-app-by-saptarshi-sadhu.vercel.app](https://weather-app-by-saptarshi-sadhu.vercel.app/) | Frontend-only static deployment |
 | 🐙 **Source Code** | [github.com/SAPTARSHI-coder/Weather-App](https://github.com/SAPTARSHI-coder/Weather-App) | Full source — open for contributions |
 
-> **Recommended:** Use the Render link for the full experience, as it runs the complete backend intelligence pipeline.
+> **Recommended:** Use the Vercel link for the full experience, as it runs the complete backend and frontend intelligence pipeline.
 
 ---
 

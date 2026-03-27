@@ -295,7 +295,7 @@ app.get('/api/weather', async (req, res) => {
             sunset: wapiData.forecast.forecastday[0]?.astro?.sunset ?? null,
 
             // ── 7-day forecast ──
-            forecast14,
+            forecast7,
 
             // ── Intelligence Layer ──
             predicted_temp,

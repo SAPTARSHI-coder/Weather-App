@@ -200,6 +200,7 @@ app.get('/api/weather', async (req, res) => {
         // Step 8: Build 7-day merged forecast
         const forecast7 = buildForecast(wapiData.forecast.forecastday, omData);
 
+
         // ── INTELLIGENCE LAYER ────────────────────────────────────────────────────
         // Step I1: Record snapshot into per-city ring buffer (reuses cityKey from step 5c)
         const aqiValueForTrend = resolveAQI(wapiData.current.air_quality);
@@ -293,7 +294,7 @@ app.get('/api/weather', async (req, res) => {
             sunrise: wapiData.forecast.forecastday[0]?.astro?.sunrise ?? null,
             sunset: wapiData.forecast.forecastday[0]?.astro?.sunset ?? null,
 
-            // ── 14-day forecast ──
+            // ── 7-day forecast ──
             forecast14,
 
             // ── Intelligence Layer ──

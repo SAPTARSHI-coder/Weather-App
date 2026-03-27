@@ -504,6 +504,13 @@ async function loadHistory(cityName) {
             return;
         }
 
+        if (validDays.length < 7 && validDays.length > 0) {
+            const noteEl = document.createElement('div');
+            noteEl.style.cssText = 'color: #888; font-size:0.85rem; padding: 8px 12px; background: rgba(255,255,255,0.05); border-radius: 8px; margin-bottom: 10px;';
+            noteEl.innerHTML = '⚠️ Showing available data (limited by API plan)';
+            listEl.appendChild(noteEl);
+        }
+
         // ── Fetch Historical AQI from Open-Meteo (since WeatherAPI omits it) ──
         try {
             const { lat, lon } = currentCityData;
@@ -720,7 +727,15 @@ async function loadPastDailyForecast(cityName) {
             }
         });
 
-        if (results.length === 0) listEl.innerHTML = '<div class="daily-item"><p>No history available.</p></div>';
+        if (results.length === 0) {
+            listEl.innerHTML = '<div class="daily-item"><p>No history available.</p></div>';
+        } else if (results.length < 7) {
+            const noticeEl = document.createElement('div');
+            noticeEl.className = 'daily-item';
+            noticeEl.style.cssText = 'color:#888; font-size:0.85rem; padding:8px;';
+            noticeEl.textContent = '⚠️ Showing available data (limited by API plan)';
+            listEl.prepend(noticeEl);
+        }
 
     } catch (err) {
         console.error("Past Daily Error:", err);

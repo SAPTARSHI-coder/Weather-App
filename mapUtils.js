@@ -6,9 +6,12 @@ let animationTimer = null;
 let timestamps = []; // Holds available times from RainViewer
 let currentFrameIndex = 0;
 let isPlaying = true;
+const OWM_API_KEY = typeof import.meta.env !== 'undefined' ? import.meta.env.VITE_OWM_API_KEY : '';
+let currentLayerType = 'precip'; // 'precip' or 'clouds'
+let cloudsLayer = null;
 
 // DOM
-let playBtn, timeSlider, timeDisplay;
+let playBtn, timeSlider, timeDisplay, btnPrecip, btnClouds, playbackControls, radarLegend;
 
 /**
  * Initialize Leaflet Map
@@ -42,9 +45,14 @@ export function initMap(containerElement, lat, lon) {
     playBtn = document.getElementById('map-play-btn');
     timeSlider = document.getElementById('map-slider');
     timeDisplay = document.getElementById('map-time');
+    btnPrecip = document.getElementById('btn-layer-precip');
+    btnClouds = document.getElementById('btn-layer-clouds');
+    playbackControls = document.getElementById('radar-playback');
+    radarLegend = document.getElementById('radar-legend');
 
     if (playBtn) {
         playBtn.onclick = () => {
+            if (currentLayerType !== 'precip') return;
             isPlaying = !isPlaying;
             playBtn.innerHTML = isPlaying ? '<i class="ri-pause-fill"></i>' : '<i class="ri-play-fill"></i>';
             if (isPlaying) {
@@ -57,6 +65,7 @@ export function initMap(containerElement, lat, lon) {
 
     if (timeSlider) {
         timeSlider.oninput = (e) => {
+            if (currentLayerType !== 'precip') return;
             if (isPlaying) {
                 isPlaying = false;
                 playBtn.innerHTML = '<i class="ri-play-fill"></i>';
@@ -65,6 +74,11 @@ export function initMap(containerElement, lat, lon) {
             currentFrameIndex = parseInt(e.target.value, 10);
             showFrame(currentFrameIndex);
         };
+    }
+
+    if (btnPrecip && btnClouds) {
+        btnPrecip.onclick = () => switchLayer('precip');
+        btnClouds.onclick = () => switchLayer('clouds');
     }
 
     // Initial Radar Load
@@ -113,8 +127,58 @@ export function startRadarAnimation() {
         .catch(err => console.error("RainViewer API Error:", err));
 }
 
+function switchLayer(type) {
+    if (type === currentLayerType) return;
+    currentLayerType = type;
+
+    if (type === 'clouds') {
+        // Activate Cloud UI
+        if (btnClouds) btnClouds.classList.add('active');
+        if (btnPrecip) btnPrecip.classList.remove('active');
+        if (playbackControls) playbackControls.style.display = 'none';
+        if (radarLegend) radarLegend.style.display = 'none';
+        
+        // Stop radar animation
+        isPlaying = false;
+        clearInterval(animationTimer);
+        if (playBtn) playBtn.innerHTML = '<i class="ri-play-fill"></i>';
+
+        // Remove radar layer
+        if (radarLayer && mapInstance.hasLayer(radarLayer)) {
+            mapInstance.removeLayer(radarLayer);
+        }
+
+        // Add clouds layer if not already added
+        if (!cloudsLayer) {
+            cloudsLayer = L.tileLayer(`https://tile.openweathermap.org/map/clouds_new/{z}/{x}/{y}.png?appid=${OWM_API_KEY}`, {
+                opacity: 0.8,
+                zIndex: 100,
+                maxNativeZoom: 18
+            });
+        }
+        if (!mapInstance.hasLayer(cloudsLayer)) {
+            cloudsLayer.addTo(mapInstance);
+        }
+
+    } else if (type === 'precip') {
+        // Activate Precip UI
+        if (btnPrecip) btnPrecip.classList.add('active');
+        if (btnClouds) btnClouds.classList.remove('active');
+        if (playbackControls) playbackControls.style.display = 'flex';
+        if (radarLegend) radarLegend.style.display = 'block';
+
+        // Remove clouds layer
+        if (cloudsLayer && mapInstance.hasLayer(cloudsLayer)) {
+            mapInstance.removeLayer(cloudsLayer);
+        }
+
+        // Restart radar animation
+        playAnimation();
+    }
+}
+
 function showFrame(index) {
-    if (!mapInstance || timestamps.length === 0) return;
+    if (!mapInstance || timestamps.length === 0 || currentLayerType !== 'precip') return;
     
     // Cache the old layer to prevent flickering during load
     const oldLayer = radarLayer;
@@ -123,7 +187,7 @@ function showFrame(index) {
     const ts = tsObj.time;
     const path = tsObj.path;
     
-    radarLayer = L.tileLayer(`https://tilecache.rainviewer.com${path}/256/{z}/{x}/{y}/2/1_1.png`, {
+    radarLayer = L.tileLayer(`https://tilecache.rainviewer.com${path}/256/{z}/{x}/{y}/4/1_1.png`, {
         opacity: 0.7,
         zIndex: 100,
         maxNativeZoom: 7

@@ -3,6 +3,11 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import axios from 'axios';
 import rateLimit from 'express-rate-limit';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 import { normalizeWeatherAPI, normalizeOpenMeteo, synthesizeWeatherApiRaw } from './src/weatherEngine/normalizer.js';
 import { fuseSnapshots } from './src/weatherEngine/fusionEngine.js';
@@ -24,6 +29,9 @@ const PORT = process.env.PORT || 3001;
 
 app.use(cors());
 app.use(express.json());
+
+// Serve static frontend files from the Vite 'dist' folder
+app.use(express.static(path.join(__dirname, 'dist')));
 
 // ─── RATE LIMITER ────────────────────────────────────────────────────────────
 const apiLimiter = rateLimit({
@@ -442,6 +450,11 @@ app.get('/api/search', async (req, res) => {
         if (error.response) res.status(error.response.status).json(error.response.data);
         else res.status(500).json({ error: 'Internal Server Error' });
     }
+});
+
+// ─── SPA FALLBACK (Serve Frontend for non-API routes) ────────────────────────
+app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, 'dist', 'index.html'));
 });
 
 app.listen(PORT, () => {

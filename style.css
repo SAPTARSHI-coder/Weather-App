@@ -1058,9 +1058,9 @@ body {
     vertical-align: middle;
 }
 
-.color-dot.rain { background: #4facfe; }
-.color-dot.snow { background: #e0e0ff; }
-.color-dot.ice { background: #a0f0ff; }
+.color-dot.light { background: #a4e66c; }
+.color-dot.mod { background: #e8d041; }
+.color-dot.heavy { background: #e33b3b; }
 
 /* ═══════════════════════════════════════════════════════════════════════════
    INTELLIGENCE PANEL

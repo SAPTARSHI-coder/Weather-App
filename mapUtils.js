@@ -153,7 +153,11 @@ function switchLayer(type) {
             fetch('/api/config')
                 .then(res => res.json())
                 .then(config => {
-                    const apiKey = config.owmKey || '721a980756c825efe5619743658f8385';
+                    const apiKey = config.owmKey;
+                    if (!apiKey) {
+                        console.warn("OpenWeatherMap API key is missing. Cloud tiles will not load.");
+                        return;
+                    }
                     cloudsLayer = L.tileLayer(`https://tile.openweathermap.org/map/clouds_new/{z}/{x}/{y}.png?appid=${apiKey}`, {
                         opacity: 0.8,
                         zIndex: 100,

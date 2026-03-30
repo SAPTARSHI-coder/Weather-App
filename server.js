@@ -3,7 +3,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import axios from 'axios';
 
-import { normalizeWeatherAPI, normalizeOpenMeteo } from './src/weatherEngine/normalizer.js';
+import { normalizeWeatherAPI, normalizeOpenMeteo, synthesizeWeatherApiRaw } from './src/weatherEngine/normalizer.js';
 import { fuseSnapshots } from './src/weatherEngine/fusionEngine.js';
 import { deriveCondition, conditionToIcon } from './src/weatherEngine/conditionEngine.js';
 import { resolveAQI, categorizeAQI, getAQIHealthTip } from './src/weatherEngine/aqiHandler.js';
@@ -30,7 +30,7 @@ if (!WEATHER_API_KEY) {
     console.warn("⚠️  WARNING: WEATHER_API_KEY is missing! API requests to WeatherAPI will fail with a 400 error.");
 }
 
-const WEATHER_BASE = 'http://api.weatherapi.com/v1';
+const WEATHER_BASE = 'https://api.weatherapi.com/v1';
 const OM_BASE = 'https://api.open-meteo.com/v1';
 
 // ─── SIMPLE IN-MEMORY CACHE ──────────────────────────────────────────────────
@@ -50,16 +50,29 @@ function setCached(key, data) {
     cache.set(key, { data, ts: Date.now() });
 }
 
-// ─── HELPER: Fetch with Retry and Timeout ──────────────────────────────────────
-async function fetchWithRetry(config, retries = 1, timeout = 5000) {
+// ─── HELPER: Fetch with Exponential Backoff ───────────────────────────────────────────
+async function fetchWithBackoff(config, retries = 2, baseDelayMs = 500, timeout = 5000) {
     for (let i = 0; i <= retries; i++) {
         try {
             return await axios({ ...config, timeout });
         } catch (error) {
             if (i === retries) throw error;
-            console.warn(`[Backend] Retry ${i+1}/${retries} for ${config.url}`);
+            const delay = baseDelayMs * Math.pow(2, i);
+            console.warn(`⏳ [Backend] Retry ${i+1}/${retries} for ${config.url} in ${delay}ms`);
+            await new Promise(r => setTimeout(r, delay));
         }
     }
+}
+
+// ─── HELPER: Geocode via Open-Meteo ────────────────────────────────────────────
+async function fetchOpenMeteoGeocode(city) {
+    const url = 'https://geocoding-api.open-meteo.com/v1/search';
+    const params = { name: city, count: 1 };
+    const res = await fetchWithBackoff({ method: 'GET', url, params });
+    if (res.data && res.data.results && res.data.results.length > 0) {
+        return { lat: res.data.results[0].latitude, lon: res.data.results[0].longitude, name: res.data.results[0].name };
+    }
+    throw new Error('Geocoding failed: City not found');
 }
 
 // ─── HELPER: Fetch Open-Meteo by coordinates ─────────────────────────────────
@@ -75,7 +88,7 @@ async function fetchOpenMeteo(lat, lon) {
         timezone: 'auto',
         forecast_days: 7
     };
-    const res = await fetchWithRetry({ method: 'GET', url, params });
+    const res = await fetchWithBackoff({ method: 'GET', url, params });
     return res.data;
 }
 
@@ -155,26 +168,67 @@ app.get('/api/weather', async (req, res) => {
     }
 
     try {
+        let wapiData = null;
+        let resolvedLat = lat;
+        let resolvedLon = lon;
+        let cityName = q;
+
         // Step 1: Fetch WeatherAPI (primary)
-        const wapiRes = await fetchWithRetry({
-            method: 'GET',
-            url: `${WEATHER_BASE}/forecast.json`,
-            params: { key: WEATHER_API_KEY, q, days: 3, aqi: 'yes', alerts: 'no' }
-        });
-        const wapiData = wapiRes.data;
-        const resolvedLat = wapiData.location.lat;
-        const resolvedLon = wapiData.location.lon;
+        if (WEATHER_API_KEY) {
+            try {
+                const wapiRes = await fetchWithBackoff({
+                    method: 'GET',
+                    url: `${WEATHER_BASE}/forecast.json`,
+                    params: { key: WEATHER_API_KEY, q, days: 3, aqi: 'yes', alerts: 'no' }
+                });
+                wapiData = wapiRes.data;
+                resolvedLat = wapiData.location.lat;
+                resolvedLon = wapiData.location.lon;
+                cityName = wapiData.location.name;
+            } catch (error) {
+                console.warn('⚠️ [WeatherAPI] Fetch failed:', error.response?.data?.error?.message || error.message);
+                // Graceful degradation: Do NOT throw, let Open-Meteo handle it
+            }
+        }
+
+        // Step 1b: Geocode via Open-Meteo if WeatherAPI failed to provide lat/lon
+        if (!wapiData && (!resolvedLat || !resolvedLon)) {
+            console.log(`🌍 [Geocoding] Resolving coordinates for "${q}" via Open-Meteo...`);
+            try {
+                const geo = await fetchOpenMeteoGeocode(q);
+                resolvedLat = geo.lat;
+                resolvedLon = geo.lon;
+                cityName = geo.name;
+            } catch (error) {
+                console.error('❌ [Geocoding] Failed:', error.message);
+            }
+        }
 
         // Step 2: Fetch Open-Meteo in parallel using the resolved coordinates
         let omData = null;
-        try {
-            omData = await fetchOpenMeteo(resolvedLat, resolvedLon);
-        } catch (e) {
-            console.warn('Open-Meteo fetch failed (continuing without):', e.response?.data || e.message);
+        if (resolvedLat && resolvedLon) {
+            try {
+                omData = await fetchOpenMeteo(resolvedLat, resolvedLon);
+            } catch (e) {
+                console.warn('⚠️ [Open-Meteo] Fetch failed:', e.response?.data || e.message);
+            }
         }
 
-        // Step 3: Normalize both
+        // ❌ Step 2b: Ultimate failure check
+        if (!wapiData && !omData) {
+            return res.status(502).json({ success: false, message: 'All weather data sources are currently unavailable.' });
+        }
+
+        // Step 3: Normalize and Synthesize missing blocks
+        if (!wapiData && omData) {
+            console.log('🔄 [Fallback] Synthesizing fake WeatherAPI UI block from Open-Meteo data...');
+            wapiData = synthesizeWeatherApiRaw(omData, cityName);
+            wapiData._synthesized = true;
+        }
+
         const primarySnap = normalizeWeatherAPI(wapiData);
+        if (wapiData._synthesized) primarySnap.source = 'Synthesized (Open-Meteo)';
+        
         const secondarySnap = omData ? normalizeOpenMeteo(omData) : { source: 'Open-Meteo', temp: null };
 
         // Step 4: Fuse

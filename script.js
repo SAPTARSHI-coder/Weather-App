@@ -830,22 +830,22 @@ async function updateUI(data, fused = null) {
     
     // Evaluate folder path based on time
     const folder = isDay ? 'assets/day/' : 'assets/night/';
-    let bgImage = `${folder}cloudy.jpeg`; // base fallback
+    let bgImage = isDay ? 'assets/day/Cloudy.jpeg' : 'assets/night/cloudy.jpeg'; // base fallback
     
     if (tempC > 35) {
         bgImage = `${folder}heatwave.jpeg`;
     } else if (tempC < 5 && !(conditionText.includes('snow') || conditionText.includes('blizzard') || conditionText.includes('ice'))) {
-        bgImage = `${folder}coldwave.png`;
+        bgImage = isDay ? 'assets/day/Coldwave.png' : 'assets/night/coldwave.png';
     } else if (windKph > 35) { // Extremely windy
         // If it's night and windy, I only have assets/night/windy.png
         // If it's day and windy, I have assets/day/windy.jpeg
         bgImage = isDay ? 'assets/day/windy.jpeg' : 'assets/night/windy.png';
     } else if (conditionText.includes('snow') || conditionText.includes('blizzard') || conditionText.includes('ice') || conditionText.includes('sleet')) {
-        bgImage = `${folder}snowy.jpeg`;
+        bgImage = isDay ? 'assets/day/Snowy.jpeg' : 'assets/night/snowy.jpeg';
     } else if (conditionText.includes('thunder') || conditionText.includes('storm') || conditionText.includes('torrential')) {
-        bgImage = `${folder}stormy.jpeg`;
+        bgImage = `${folder}stormy.jpeg`; // stormy.jpeg is lowercase in both day and night
     } else if (conditionText.includes('rain') || conditionText.includes('drizzle')) {
-        bgImage = `${folder}rainy.jpeg`;
+        bgImage = isDay ? 'assets/day/Rainy.jpeg' : 'assets/night/rainy.jpeg';
     } else if (conditionText.includes('mist') || conditionText.includes('fog')) {
         if (current.vis_km > 7) {
             bgImage = isDay ? 'assets/day/Sunny.jpeg' : 'assets/night/clear.jpeg';

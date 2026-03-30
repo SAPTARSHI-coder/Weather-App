@@ -25,6 +25,11 @@ app.use(cors());
 app.use(express.json());
 
 const WEATHER_API_KEY = process.env.WEATHER_API_KEY || process.env.VITE_WEATHER_API_KEY;
+
+if (!WEATHER_API_KEY) {
+    console.warn("⚠️  WARNING: WEATHER_API_KEY is missing! API requests to WeatherAPI will fail with a 400 error.");
+}
+
 const WEATHER_BASE = 'http://api.weatherapi.com/v1';
 const OM_BASE = 'https://api.open-meteo.com/v1';
 
@@ -163,9 +168,9 @@ app.get('/api/weather', async (req, res) => {
         // Step 2: Fetch Open-Meteo in parallel using the resolved coordinates
         let omData = null;
         try {
-            omData = await fetchOpenMeteo(lat, lon);
+            omData = await fetchOpenMeteo(resolvedLat, resolvedLon);
         } catch (e) {
-            console.warn('Open-Meteo fetch failed (continuing without):', e.message);
+            console.warn('Open-Meteo fetch failed (continuing without):', e.response?.data || e.message);
         }
 
         // Step 3: Normalize both
@@ -321,8 +326,9 @@ app.get('/api/weather', async (req, res) => {
         res.json({ success: true, data: response });
 
     } catch (error) {
-        console.error('Fusion engine error:', error.message);
-        res.status(500).json({ success: false, message: 'Failed to fetch weather data' });
+        const message = error.response?.data?.error?.message || error.message;
+        console.error('Fusion engine error:', message, error.response?.data || '');
+        res.status(error.response?.status || 500).json({ success: false, message: 'Failed to fetch weather data: ' + message });
     }
 });
 

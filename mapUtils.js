@@ -6,7 +6,6 @@ let animationTimer = null;
 let timestamps = []; // Holds available times from RainViewer
 let currentFrameIndex = 0;
 let isPlaying = true;
-const OWM_API_KEY = typeof import.meta.env !== 'undefined' ? import.meta.env.VITE_OWM_API_KEY : '';
 let currentLayerType = 'precip'; // 'precip' or 'clouds'
 let cloudsLayer = null;
 
@@ -150,14 +149,29 @@ function switchLayer(type) {
 
         // Add clouds layer if not already added
         if (!cloudsLayer) {
-            cloudsLayer = L.tileLayer(`https://tile.openweathermap.org/map/clouds_new/{z}/{x}/{y}.png?appid=${OWM_API_KEY}`, {
-                opacity: 0.8,
-                zIndex: 100,
-                maxNativeZoom: 18
-            });
-        }
-        if (!mapInstance.hasLayer(cloudsLayer)) {
-            cloudsLayer.addTo(mapInstance);
+            // Fetch configuration dynamically so the app is deployment ready without needing a local build
+            fetch('/api/config')
+                .then(res => res.json())
+                .then(config => {
+                    const apiKey = config.owmKey || '721a980756c825efe5619743658f8385';
+                    cloudsLayer = L.tileLayer(`https://tile.openweathermap.org/map/clouds_new/{z}/{x}/{y}.png?appid=${apiKey}`, {
+                        opacity: 0.8,
+                        zIndex: 100,
+                        maxNativeZoom: 18
+                    });
+                    
+                    // Only add if the user hasn't quickly toggled back to precip
+                    if (currentLayerType === 'clouds' && !mapInstance.hasLayer(cloudsLayer)) {
+                        cloudsLayer.addTo(mapInstance);
+                    }
+                })
+                .catch(err => {
+                    console.error("Failed to fetch OWM configuration:", err);
+                });
+        } else {
+            if (!mapInstance.hasLayer(cloudsLayer)) {
+                cloudsLayer.addTo(mapInstance);
+            }
         }
 
     } else if (type === 'precip') {

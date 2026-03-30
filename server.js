@@ -452,8 +452,16 @@ app.get('/api/search', async (req, res) => {
     }
 });
 
+// ─── SAFE CONFIG ENDPOINT ────────────────────────────────────────────────────
+app.get('/api/config', (req, res) => {
+    // Only send the public map tile key to the frontend
+    res.json({ 
+        owmKey: process.env.VITE_OWM_API_KEY || ''
+    });
+});
+
 // ─── SPA FALLBACK (Serve Frontend for non-API routes) ────────────────────────
-app.get('*', (req, res) => {
+app.use((req, res) => {
     res.sendFile(path.join(__dirname, 'dist', 'index.html'));
 });
 

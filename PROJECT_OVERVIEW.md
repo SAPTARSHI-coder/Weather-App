@@ -127,9 +127,10 @@ The API key is stored in a file called `.env` in the project root:
 
 ```
 WEATHER_API_KEY=your_secret_key_here
+VITE_OWM_API_KEY=your_openweathermap_key_here
 ```
 
-This file is listed in `.gitignore`, which means it is **never uploaded to GitHub**. When deployed to Render, the key is entered directly into Render's dashboard — not in the code.
+This file is listed in `.gitignore`, which means it is **never uploaded to GitHub**. When deployed to Render, the keys are entered directly into Render's dashboard — not in the code.
 
 ---
 
@@ -144,11 +145,12 @@ Imagine going to a restaurant:
 
 You don't go into the kitchen yourself. You tell the waiter what you want (`GET weather for Mumbai`), and the waiter brings back your order (a JSON response).
 
-In SkyGlass, we use two weather APIs:
+In SkyGlass, we use three weather APIs:
 
 | API | Free? | What We Get |
 |---|---|---|
 | **WeatherAPI.com** | Free tier available (key required) | Current conditions, 3-day forecast, AQI, historical data, city search |
+| **OpenWeatherMap** | Free tier available (key required) | Satellite cloud cover tile overlays for the map |
 | **Open-Meteo.com** | Completely free, no key needed | 7-day forecast, hourly data |
 
 ---
@@ -287,9 +289,10 @@ When someone new downloads this project, they just run `npm install` and everyth
 **What it does:** Stores secret values that should never be committed to version control:
 ```
 WEATHER_API_KEY=abc123yourkey
+VITE_OWM_API_KEY=def456yourkey
 PORT=3001
 ```
-The `dotenv` library reads this file at startup and makes the values available as `process.env.WEATHER_API_KEY`.
+The `dotenv` library reads this file at startup and makes the backend values available as `process.env.WEATHER_API_KEY`. Vite reads the `VITE_` prefixed variables securely for the frontend build.
 
 **⚠️ This file is in `.gitignore` and must NEVER be uploaded to GitHub.**
 

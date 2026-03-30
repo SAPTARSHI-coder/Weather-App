@@ -69,7 +69,7 @@ The result is a dashboard that provides not only current conditions but also:
 | 🌿 **AQI Intelligence** | Real-time Air Quality Index with health tips and color-coded risk categories |
 | 🌡️ **RealFeel® Temperature** | AccuWeather-style perceived temperature accounting for wind, humidity, and UV |
 | 📈 **Trend Engine** | Per-city in-memory ring buffer tracking temperature, humidity, pressure, AQI slopes |
-| 🗺️ **Interactive Map** | Leaflet.js map with weather overlay and click-to-query location support |
+| 🗺️ **Interactive Map** | Leaflet.js map with toggleable RainViewer (Precipitation Radar) and OpenWeatherMap (Satellite Clouds) overlays |
 | 📅 **History Dashboard** | 14-day lookback with Chart.js visualizations (temperature, humidity, pressure, AQI) |
 | ⏱️ **Dual Timezone Clock** | Live clock widget showing local time and a second configurable timezone |
 | 💨 **Atmosphere Monitor** | Dedicated pressure, UV, and CO monitoring cards |
@@ -283,6 +283,7 @@ City autocomplete search powered by WeatherAPI's search endpoint.
 | API | Key Required | Usage |
 |---|---|---|
 | [WeatherAPI.com](https://www.weatherapi.com) | ✅ Yes | Current weather, 3-day forecast, AQI, search, history |
+| [OpenWeatherMap](https://openweathermap.org/) | ✅ Yes | Satellite cloud cover tile overlays for the map |
 | [Open-Meteo.com](https://open-meteo.com) | ❌ No | 7-day extended forecast, hourly data (free) |
 
 ---
@@ -312,6 +313,7 @@ Create a `.env` file in the project root:
 
 ```env
 WEATHER_API_KEY=your_weatherapi_key_here
+VITE_OWM_API_KEY=your_openweathermap_key_here
 PORT=3001
 ```
 
@@ -344,7 +346,8 @@ node server.js
 
 | Variable | Required | Description |
 |---|---|---|
-| `WEATHER_API_KEY` | ✅ Yes | WeatherAPI.com API key |
+| `WEATHER_API_KEY` | ✅ Yes | WeatherAPI.com API key for core data |
+| `VITE_OWM_API_KEY` | ✅ Yes | OpenWeatherMap API key for map cloud tiles |
 | `PORT` | No | Server port (defaults to `3001`) |
 
 > ⚠️ **Never commit your `.env` file.** It is already listed in `.gitignore`. API keys should be set as environment variables in your hosting dashboard (e.g., Render's Environment tab).
@@ -361,16 +364,17 @@ SkyGlass is deployed on two platforms simultaneously:
 | Setting | Value |
 |---|---|
 | **Build Command** | `npm install && npm run build` |
-| **Start Command** | `node server.js` |
+| **Start Command** | `npm start` |
 | **Environment** | Node |
 | **Port** | `10000` (Render default) or set via `PORT` env var |
 
 Set the following in **Render → Your Service → Environment**:
 ```
 WEATHER_API_KEY = your_weatherapi_key_here
+VITE_OWM_API_KEY = your_openweathermap_key_here
 ```
 
-The Express server in `server.js` is configured to serve the `dist/` folder as static files in production, so a single service handles both frontend and backend.
+The Express server in `server.js` is automatically configured to serve the built `dist/` folder as static files in production, so a single backend service handles both serving the frontend and running the backend API seamlessly.
 
 ---
 

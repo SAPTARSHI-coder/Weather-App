@@ -232,7 +232,7 @@ searchInput.addEventListener('keypress', (e) => {
             } catch (err) {
                 console.error('Search autocomplete error:', err);
             }
-        }, 300); // 300ms debounce
+        }, 800); // 800ms debounce to prevent API spam
     });
     
     // Hide suggestions on outside click
@@ -434,7 +434,13 @@ if (hrs >= 5 && hrs < 12) {
 
 // -- API Integration --
 
+let isCityLoading = false;
+
 async function loadCity(query) {
+    if (!query || typeof query !== 'string' || !query.trim()) return;
+    if (isCityLoading) return;
+    
+    isCityLoading = true;
     showDashboardState('loading');
     document.body.style.cursor = 'wait';
     try {
@@ -462,6 +468,7 @@ async function loadCity(query) {
     } finally {
         document.body.style.cursor = 'default';
         citySearch.value = '';
+        setTimeout(() => { isCityLoading = false; }, 800);
     }
 }
 

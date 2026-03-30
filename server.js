@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import axios from 'axios';
+import rateLimit from 'express-rate-limit';
 
 import { normalizeWeatherAPI, normalizeOpenMeteo, synthesizeWeatherApiRaw } from './src/weatherEngine/normalizer.js';
 import { fuseSnapshots } from './src/weatherEngine/fusionEngine.js';
@@ -24,6 +25,16 @@ const PORT = process.env.PORT || 3001;
 app.use(cors());
 app.use(express.json());
 
+// ─── RATE LIMITER ────────────────────────────────────────────────────────────
+const apiLimiter = rateLimit({
+    windowMs: 10 * 60 * 1000, // 10 minutes
+    max: 100, // Limit each IP to 100 requests per window
+    message: { success: false, message: 'Too many requests from this IP. Please try again later.' },
+    standardHeaders: true,
+    legacyHeaders: false,
+});
+app.use('/api/', apiLimiter);
+
 const WEATHER_API_KEY = process.env.WEATHER_API_KEY || process.env.VITE_WEATHER_API_KEY;
 
 if (!WEATHER_API_KEY) {
@@ -35,7 +46,7 @@ const OM_BASE = 'https://api.open-meteo.com/v1';
 
 // ─── SIMPLE IN-MEMORY CACHE ──────────────────────────────────────────────────
 const cache = new Map();
-const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+const CACHE_TTL_MS = 10 * 60 * 1000; // 10 minutes
 
 function getCached(key) {
     const entry = cache.get(key);
@@ -56,6 +67,11 @@ async function fetchWithBackoff(config, retries = 2, baseDelayMs = 500, timeout 
         try {
             return await axios({ ...config, timeout });
         } catch (error) {
+            // Do NOT retry on 4xx Client Errors (will deterministically fail again)
+            if (error.response && error.response.status >= 400 && error.response.status < 500 && error.response.status !== 429) {
+                console.warn(`⏳ [Backend] 🛑 Aborting retry for ${config.url} due to client error ${error.response.status}`);
+                throw error;
+            }
             if (i === retries) throw error;
             const delay = baseDelayMs * Math.pow(2, i);
             console.warn(`⏳ [Backend] Retry ${i+1}/${retries} for ${config.url} in ${delay}ms`);
@@ -152,19 +168,22 @@ function buildForecast(wapiForecast, omData) {
 app.get('/api/weather', async (req, res) => {
     let { lat, lon, q } = req.query;
     
-    if (lat && lon) {
+    if (lat && lon && lat !== 'undefined' && lon !== 'undefined') {
         q = `${lat},${lon}`;
     }
 
-    if (!q) {
-         return res.status(400).json({ success: false, message: 'Latitude "lat" and Longitude "lon" are required.' });
+    if (!q || typeof q !== 'string' || q.trim() === '' || q === 'undefined' || q === 'null') {
+         return res.status(400).json({ success: false, message: 'Invalid or missing location query.' });
     }
 
     // Check cache
     const cacheKey = `fused:${q.toLowerCase().trim()}`;
     const cached = getCached(cacheKey);
     if (cached) {
+        console.log(`✅ [CACHE HIT] Served ${cacheKey} directly from memory. Saved API calls!`);
         return res.json({ success: true, data: { ...cached, _cached: true } });
+    } else {
+        console.log(`⏳ [CACHE MISS] Fetching fresh data for ${cacheKey}...`);
     }
 
     try {
@@ -392,7 +411,9 @@ app.get('/api/weather', async (req, res) => {
 
 app.get('/api/history', async (req, res) => {
     const { q, dt } = req.query;
-    if (!q || !dt) return res.status(400).json({ error: 'City "q" and date "dt" (YYYY-MM-DD) are required' });
+    if (!q || typeof q !== 'string' || q.trim() === '' || q === 'undefined' || q === 'null' || !dt) {
+         return res.status(400).json({ error: 'City "q" and date "dt" (YYYY-MM-DD) are required and must be valid strings' });
+    }
     try {
         const response = await axios.get(`${WEATHER_BASE}/history.json`, {
             params: { key: WEATHER_API_KEY, q, dt, aqi: 'yes' }
@@ -408,7 +429,9 @@ app.get('/api/history', async (req, res) => {
 
 app.get('/api/search', async (req, res) => {
     const { q } = req.query;
-    if (!q) return res.status(400).json({ error: 'Query parameter "q" is required' });
+    if (!q || typeof q !== 'string' || q.trim() === '' || q === 'undefined' || q === 'null') {
+         return res.status(400).json({ error: 'Query parameter "q" is required and must be a valid string' });
+    }
     try {
         const response = await axios.get(`${WEATHER_BASE}/search.json`, {
             params: { key: WEATHER_API_KEY, q }

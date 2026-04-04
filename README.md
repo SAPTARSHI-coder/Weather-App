@@ -17,6 +17,7 @@
 
 - [Overview](#-overview)
 - [Live Demo](#-live-demo)
+- [Screenshots & Preview](#️-screenshots--preview)
 - [Key Features](#-key-features)
 - [Architecture](#-architecture)
 - [Intelligence Engines](#-intelligence-engines)
@@ -56,6 +57,24 @@ The result is a dashboard that provides not only current conditions but also:
 | 🐙 **Source Code** | [github.com/SAPTARSHI-coder/Weather-App](https://github.com/SAPTARSHI-coder/Weather-App) | Full source — open for contributions |
 
 > **⭐ Recommended:** Use the **Vercel** link for the best experience — it is the primary, production-grade deployment with zero cold-start latency and global edge delivery.
+
+---
+
+## 🖼️ Screenshots & Preview
+
+### 📸 Dashboard — Static Screenshot
+
+![SkyGlass Dashboard Screenshot](assets/ss.png)
+
+> *Full glassmorphism dashboard showing live weather data for Los Angeles — featuring the current conditions hero card, AQI panel, wind compass, humidity indicator, sunrise/sunset card, and the sidebar navigation.*
+
+---
+
+### 🎬 Live Demo — Animated Walkthrough
+
+![SkyGlass Animated Demo](assets/gif.gif)
+
+> *End-to-end walkthrough: city search → real-time data load → forecast strips → intelligence panel → interactive radar map.*
 
 ---
 

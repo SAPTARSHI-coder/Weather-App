@@ -3,8 +3,8 @@
 > A production-grade, full-stack weather platform that fuses data from multiple live APIs, applies a custom intelligence layer, and delivers a premium glassmorphism UI with real-time environmental insights.
 
 [![GitHub](https://img.shields.io/badge/GitHub-SAPTARSHI--coder%2FWeather--App-181717?style=for-the-badge&logo=github)](https://github.com/SAPTARSHI-coder/Weather-App)
-[![Render](https://img.shields.io/badge/Render-Live%20Demo-4f46e5?style=for-the-badge&logo=render)](https://weather-app-bfqr.onrender.com)
 [![Vercel](https://img.shields.io/badge/Vercel-Live%20Demo-000000?style=for-the-badge&logo=vercel)](https://weather-app-by-saptarshi-sadhu.vercel.app/)
+[![Render](https://img.shields.io/badge/Render-Live%20Demo-4f46e5?style=for-the-badge&logo=render)](https://weather-app-bfqr.onrender.com)
 [![Node.js](https://img.shields.io/badge/Node.js-22.x-339933?style=for-the-badge&logo=nodedotjs)](https://nodejs.org)
 [![Express](https://img.shields.io/badge/Express-5.x-000000?style=for-the-badge&logo=express)](https://expressjs.com)
 [![Vite](https://img.shields.io/badge/Vite-6.x-646CFF?style=for-the-badge&logo=vite)](https://vitejs.dev)
@@ -26,6 +26,7 @@
 - [Getting Started](#-getting-started)
 - [Environment Variables](#-environment-variables)
 - [Deployment](#-deployment)
+- [Responsive Design](#-responsive-design)
 - [How Data Flows](#-how-data-flows)
 - [License](#-license)
 
@@ -50,11 +51,11 @@ The result is a dashboard that provides not only current conditions but also:
 
 | Platform | URL | Notes |
 |---|---|---|
-| 🟣 **Render** | [weather-app-bfqr.onrender.com](https://weather-app-bfqr.onrender.com) | Full-stack Node.js service (backend + frontend served together) |
-| ⚫ **Vercel** | [weather-app-by-saptarshi-sadhu.vercel.app](https://weather-app-by-saptarshi-sadhu.vercel.app/) | Frontend-only static deployment |
+| ⚫ **Vercel** ⭐ | [weather-app-by-saptarshi-sadhu.vercel.app](https://weather-app-by-saptarshi-sadhu.vercel.app/) | **Primary deployment** — fastest, global CDN, always on |
+| 🟣 **Render** | [weather-app-bfqr.onrender.com](https://weather-app-bfqr.onrender.com) | Full-stack Node.js service (may cold-start on free tier) |
 | 🐙 **Source Code** | [github.com/SAPTARSHI-coder/Weather-App](https://github.com/SAPTARSHI-coder/Weather-App) | Full source — open for contributions |
 
-> **Recommended:** Use the Vercel link for the full experience, as it runs the complete backend and frontend intelligence pipeline.
+> **⭐ Recommended:** Use the **Vercel** link for the best experience — it is the primary, production-grade deployment with zero cold-start latency and global edge delivery.
 
 ---
 
@@ -358,8 +359,26 @@ node server.js
 
 SkyGlass is deployed on two platforms simultaneously:
 
-### 🟣 Render (Full-Stack — Recommended)
+### ⚫ Vercel — Primary Deployment ⭐
+**Live:** [https://weather-app-by-saptarshi-sadhu.vercel.app](https://weather-app-by-saptarshi-sadhu.vercel.app/)
+
+Vercel is the **recommended and primary** hosting platform for SkyGlass. It provides zero-configuration deployment, global edge CDN, instant cache invalidation, and automatic HTTPS — with zero cold-start delays.
+
+| Setting | Value |
+|---|---|
+| **Framework Preset** | Vite |
+| **Build Command** | `npm run build` |
+| **Output Directory** | `dist` |
+| **Node Version** | 18.x+ |
+
+> Vercel automatically detects the Vite configuration and optimises the build for global edge delivery.
+
+---
+
+### 🟣 Render — Full-Stack Alternative
 **Live:** [https://weather-app-bfqr.onrender.com](https://weather-app-bfqr.onrender.com)
+
+The Render deployment runs the complete Express + Vite stack as a single Node.js service. Note that the free tier may exhibit a **cold-start delay** of ~30 s after periods of inactivity.
 
 | Setting | Value |
 |---|---|
@@ -378,16 +397,29 @@ The Express server in `server.js` is automatically configured to serve the built
 
 ---
 
-### ⚫ Vercel (Frontend Static)
-**Live:** [https://weather-app-by-saptarshi-sadhu.vercel.app](https://weather-app-by-saptarshi-sadhu.vercel.app/)
+## 📱 Responsive Design
 
-The Vercel deployment serves the pre-built `dist/` folder as a static site. It does **not** run the Node.js backend, so API calls must point to the Render backend URL.
+SkyGlass is fully responsive across all screen sizes, implemented with CSS media queries in `style.css`. No external responsive framework is used — all breakpoints are hand-crafted with vanilla CSS.
 
-| Setting | Value |
-|---|---|
-| **Framework Preset** | Vite |
-| **Build Command** | `npm run build` |
-| **Output Directory** | `dist` |
+| Breakpoint | Target | Key Behaviour |
+|---|---|---|
+| `≥ 1200px` | Desktop (full) | Full three-column dashboard grid, side-by-side forecast panels |
+| `≤ 1200px` | Laptop / small desktop | Forecast panels stack to a single column; intel grid collapses to 2 columns |
+| `≤ 1100px` | Wide tablet | Intelligence panel grid collapses from 4 → 2 columns |
+| `≤ 900px` | Tablet / large mobile | Sidebar slides off-screen (hamburger menu); dashboard grid becomes single-column; `margin-left` removed from `.main-content` |
+| `≤ 768px` | Tablet (portrait) | Reduced padding and font sizes; search bar takes full width; header stacks vertically; clock widget repositioned |
+| `≤ 650px` | Mobile (large) | Intelligence panel collapses to full single-column; horizontal borders replace vertical dividers |
+| `≤ 480px` | Mobile (small) | Compact typography, compressed cards, hidden non-critical map legend labels |
+
+### Key Responsive Patterns
+
+- **Sidebar:** Fixed 250 px sidebar on desktop → slides off-screen (`left: -100%`) at `≤ 900px` with a hamburger toggle button revealed
+- **Dashboard Grid:** 3-column (`2fr 1fr 1fr`) on desktop → single column on mobile
+- **Forecast Grid:** 2-column side-by-side on desktop → stacked single column at `≤ 1200px`
+- **Intelligence Panel:** 4-column horizontal strip → 2-column at `≤ 1100px` → single column at `≤ 650px`
+- **Charts:** `overflow-x: auto` with `min-width: 400px` canvas ensures charts remain readable and horizontally scroll on narrow viewports
+- **Typography:** Heading and value font sizes scale down progressively at smaller breakpoints
+- **Map:** Full-height interactive map adapts height to available viewport on small screens
 
 ---
 

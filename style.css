@@ -909,6 +909,238 @@ body {
     }
 }
 
+/* ─── 768px: Tablet Portrait ───────────────────────────────────────────── */
+@media (max-width: 768px) {
+    :root {
+        --gap: 16px;
+        --radius: 14px;
+    }
+
+    .main-content {
+        padding: 16px;
+        gap: 16px;
+    }
+
+    /* Search + header stack vertically */
+    .header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+    }
+
+    .search-bar {
+        max-width: 100%;
+    }
+
+    .clock-widget {
+        justify-content: center;
+    }
+
+    /* Hero header */
+    #greeting {
+        font-size: 1.8rem;
+    }
+
+    /* Dashboard cards */
+    .dashboard-grid {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+
+    .current-weather {
+        min-height: 160px;
+    }
+
+    .huge-icon {
+        font-size: 5rem;
+    }
+
+    .weather-info h2 {
+        font-size: 2.4rem;
+    }
+
+    .highlight-card {
+        min-height: 160px;
+    }
+
+    .highlight-card .value {
+        font-size: 1.9rem;
+    }
+
+    /* Forecast grid already handled by 1200px breakpoint; tighten further */
+    .forecasts-grid {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+
+    /* Intelligence panel: already 2-col at 1100px, keep it */
+    .intel-section {
+        padding: 16px;
+    }
+
+    .intel-main-value {
+        font-size: 2rem;
+    }
+
+    /* Map */
+    .map-wrapper {
+        height: 400px;
+    }
+
+    .map-controls {
+        gap: 8px;
+        padding: 10px 14px;
+    }
+
+    .radar-legend {
+        gap: 8px;
+        font-size: 0.72rem;
+    }
+
+    /* Cards */
+    .card {
+        padding: 18px;
+    }
+
+    /* Saved cities */
+    #saved-view .dashboard-grid {
+        grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    }
+}
+
+/* ─── 480px: Small Mobile ───────────────────────────────────────────────── */
+@media (max-width: 480px) {
+    :root {
+        --radius: 12px;
+        --gap: 12px;
+    }
+
+    .main-content {
+        padding: 12px;
+        gap: 12px;
+    }
+
+    /* Logo */
+    .logo {
+        font-size: 1.4rem;
+        margin-bottom: 30px;
+    }
+
+    /* Greeting */
+    #greeting {
+        font-size: 1.5rem;
+    }
+
+    .welcome-text {
+        font-size: 0.85rem;
+    }
+
+    /* Clock widget: compact */
+    .clock-widget {
+        padding: 8px 12px;
+        gap: 8px;
+    }
+
+    .digital-times {
+        gap: 1px;
+    }
+
+    .local-time #current-time {
+        font-size: 0.9rem;
+    }
+
+    .gmt-time {
+        font-size: 0.65rem;
+    }
+
+    /* Weather hero */
+    .current-weather {
+        flex-direction: column;
+        text-align: center;
+        min-height: 140px;
+    }
+
+    .huge-icon {
+        font-size: 4rem;
+    }
+
+    .weather-info h1 {
+        font-size: 1.4rem;
+    }
+
+    .weather-info h2 {
+        font-size: 1.9rem;
+    }
+
+    .weather-info p {
+        font-size: 1rem;
+    }
+
+    /* Highlight cards */
+    .highlight-card {
+        min-height: 130px;
+        padding: 14px;
+    }
+
+    .highlight-card .value {
+        font-size: 1.6rem;
+    }
+
+    .highlight-card h3 {
+        font-size: 0.72rem;
+    }
+
+    /* Cards */
+    .card {
+        padding: 14px;
+    }
+
+    /* Intelligence panel: full single column already handled; shrink text */
+    .intel-main-value {
+        font-size: 1.7rem;
+    }
+
+    .intel-rain-badge {
+        font-size: 1.4rem;
+        padding: 4px 12px;
+    }
+
+    .intel-stability-badge {
+        font-size: 1.1rem;
+        padding: 4px 10px;
+    }
+
+    /* Map: compact height */
+    .map-wrapper {
+        height: 300px;
+    }
+
+    /* Hide radar legend on very small screens */
+    .radar-legend {
+        display: none;
+    }
+
+    /* Forecast chart min-width reduced so it fits better */
+    .chart-container canvas {
+        min-width: 280px;
+    }
+
+    /* Saved cities */
+    #saved-view .dashboard-grid {
+        grid-template-columns: 1fr;
+    }
+
+    /* History chips: smaller */
+    .history-day-chip {
+        min-width: 70px;
+        padding: 8px 10px;
+    }
+
+    .history-day-chip .chip-temp {
+        font-size: 0.9rem;
+    }
+}
+
 /* History View */
 .history-picker-container {
     background: var(--glass-bg);

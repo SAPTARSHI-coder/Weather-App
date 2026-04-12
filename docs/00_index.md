@@ -18,7 +18,8 @@
 | 7 | [07_why_better.md](./07_why_better.md) | Why SkyGlass beats ordinary weather apps |
 | 8 | [08_viva_summary.md](./08_viva_summary.md) | Quick-memorize summary for your viva |
 | 9 | [09_viva_questions.md](./09_viva_questions.md) | 10 teacher questions with model answers |
-| 10 | [10_glossary.md](./10_glossary.md) | Every technical term, explained in plain English |
+| 10 | [10_glossary.md](./10_glossary.md) | Every technical term, explained in plain English (A–Z) |
+| 11 | [11_study_card.md](./11_study_card.md) | ⚡ One-page last-minute revision card — read this morning of viva |
 | Ref | [PROJECT_OVERVIEW.md](./PROJECT_OVERVIEW.md) | Full original technical reference document |
 
 ---
